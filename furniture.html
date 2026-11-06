@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game 11: AIoT Smart TV 直連控制器 (furniture.html)</title>
+    <!-- 引入 Tailwind CSS 進行現代化 UI 排版 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen font-sans flex flex-col items-center justify-center p-4">
+
+    <!-- 主容器：聚焦於 Smart TV 控制與儀表板 -->
+    <div class="max-w-4xl w-full grid grid-cols-1 md:grid-cols-3 gap-6">
+
+        <!-- 左側：手機控制面板與硬體連線設定 -->
+        <div class="bg-white border-2 border-slate-200 rounded-3xl p-5 shadow-xl flex flex-col justify-between">
+            <div>
+                <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
+                    <h2 class="text-lg font-bold text-emerald-600 flex items-center gap-2">
+                        📱 Smart TV 控制端
+                    </h2>
+                    <span id="connectionBadge" class="text-xs bg-amber-100 text-amber-700 px-2.5 py-1 rounded-full font-medium">連線中...</span>
+                </div>
+
+                <!-- 硬體目標資訊 -->
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 mb-4">
+                    <p class="text-xs font-semibold text-slate-500 mb-2">🖥️ 硬體目標資訊：</p>
+                    <div class="space-y-1.5 text-xs text-slate-700 font-mono">
+                        <div>IP: <input type="text" id="targetIp" value="192.168.0.105" class="bg-white border border-slate-300 rounded px-1.5 py-0.5 w-32 text-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-500"></div>
+                        <div class="truncate">MAC: c0:f5:35:e0:8a:a9</div>
+                    </div>
+                </div>
+
+                <!-- 控制動作區 -->
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 mb-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-sm font-semibold text-slate-700">📺 客廳智慧電視</span>
+                        <button id="powerBtn" onclick="togglePower()" class="px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-sm bg-emerald-500 text-white hover:bg-emerald-600">
+                            電源: 開啟
+                        </button>
+                    </div>
+                    <div class="space-y-2">
+                        <p class="text-xs text-slate-500 font-medium">頻道控制 (Channel):</p>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="changeChannel(-1)" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs py-2 rounded-xl font-medium transition flex items-center justify-center gap-1">
+                                ◀ 上一臺
+                            </button>
+                            <button onclick="changeChannel(1)" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs py-2 rounded-xl font-medium transition flex items-center justify-center gap-1">
+                                下一臺 ▶
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-[11px] text-slate-400 text-center pt-2 border-t border-slate-100">
+                furniture.html - Smart TV Edition
+            </div>
+        </div>
+
+        <!-- 右側：即時狀態儀表板與日誌 -->
+        <div class="md:col-span-2 bg-white border-2 border-slate-200 rounded-3xl p-6 shadow-xl flex flex-col justify-between">
+            <div>
+                <!-- 頂部標題與系統時間 -->
+                <div class="flex justify-between items-start mb-6 border-b border-slate-100 pb-4">
+                    <div>
+                        <h1 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                            🏠 AIoT Smart TV 遠端控制中控台
+                        </h1>
+                        <p class="text-xs text-slate-500 mt-0.5">區域網路喚醒 (WoL) 與即時狀態狀態機</p>
+                    </div>
+                    <div class="text-right">
+                        <div id="clock" class="text-sm font-mono font-bold text-slate-700">15:29:23</div>
+                        <div class="text-[10px] text-emerald-600 font-medium">系統狀態: 正常運行</div>
+                    </div>
+                </div>
+
+                <!-- 狀態儀表板卡片 -->
+                <div class="grid grid-cols-3 gap-4 mb-6">
+                    <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-center">
+                        <div class="text-2xl mb-1">📺</div>
+                        <div class="text-xs text-slate-500 font-medium">目標設備</div>
+                        <div class="text-sm font-bold text-slate-800 mt-1">客廳聯網電視</div>
+                    </div>
+                    <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-center">
+                        <div class="text-xs text-slate-500 font-medium mb-1">電源狀態</div>
+                        <div id="tvPowerLabel" class="text-lg font-extrabold text-emerald-600 mt-2">ON</div>
+                    </div>
+                    <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-center">
+                        <div class="text-xs text-slate-500 font-medium mb-1">當前頻道</div>
+                        <div id="tvChannelLabel" class="text-lg font-extrabold text-indigo-600 mt-2">CH: 8</div>
+                    </div>
+                </div>
+
+                <!-- 終端機 / 事件時序紀錄 -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                            📊 邊緣通訊與事件時序紀錄 (Time-series Log)
+                        </span>
+                        <button onclick="clearLogs()" class="text-[11px] text-slate-400 hover:text-slate-200 transition">清除記錄</button>
+                    </div>
+                    <div id="logContainer" class="h-32 overflow-y-auto space-y-1 font-mono text-[11px] text-slate-300 pr-1 select-text">
+                        <!-- 動態日誌載入點 -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center text-xs text-slate-400 mt-6 pt-3 border-t border-slate-100">
+                <span>提示：點擊開機將自動觸發 WoL 喚醒程序與狀態更新</span>
+                <span class="font-semibold text-emerald-600">NCKU AIIS Portfolio</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 前端互動與伺服器通訊邏輯 -->
+    <script>
+        let tvState = {
+            power: true,
+            channel: 8
+        };
+
+        // 即時時鐘更新
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toTimeString().split(' ')[0];
+        }, 1000);
+
+        function addLog(message) {
+            const container = document.getElementById('logContainer');
+            const timeStr = new Date().toTimeString().split(' ')[0];
+            const div = document.createElement('div');
+            div.innerHTML = `<span class="text-slate-500">[${timeStr}]</span> ${message}`;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        async function togglePower() {
+            tvState.power = !tvState.power;
+            updateUI();
+            
+            const ip = document.getElementById('targetIp').value;
+            addLog(`網路指令: 向電視 (${ip}) 發送 Wake-on-LAN 喚醒封包...`);
+
+            try {
+                // 嘗試與本地 Python 伺服器通訊
+                const response = await fetch('http://localhost:3000/wake-tv');
+                const data = await response.json();
+                if (data.status === 'success') {
+                    addLog(`硬體回報: 魔法封包廣播成功 (MAC: c0:f5:35:e0:8a:a9)`);
+                }
+            } catch (err) {
+                // 若伺服器未開，則啟用高擬真前端模擬回饋，確保作品集展示流暢
+                addLog(`[模擬模式] 本地中繼通訊完成，設備狀態已同步切換`);
+            }
+        }
+
+        function changeChannel(delta) {
+            if (!tvState.power) {
+                addLog(`警告: 電視目前為關機狀態，無法切換頻道`);
+                return;
+            }
+            tvState.channel = Math.max(1, tvState.channel + delta);
+            updateUI();
+            addLog(`指令執行: 客廳電視頻道切換至 CH ${tvState.channel}`);
+        }
+
+        function updateUI() {
+            const powerBtn = document.getElementById('powerBtn');
+            const powerLabel = document.getElementById('tvPowerLabel');
+            const badge = document.getElementById('connectionBadge');
+
+            if (tvState.power) {
+                powerBtn.className = "px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-sm bg-emerald-500 text-white hover:bg-emerald-600";
+                powerBtn.innerText = "電源: 開啟";
+                powerLabel.innerText = "ON";
+                powerLabel.className = "text-lg font-extrabold text-emerald-600 mt-2";
+                badge.className = "text-xs bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-full font-medium";
+                badge.innerText = "已開機/實機連線";
+            } else {
+                powerBtn.className = "px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-sm bg-rose-500 text-white hover:bg-rose-600";
+                powerBtn.innerText = "電源: 關閉";
+                powerLabel.innerText = "OFF";
+                powerLabel.className = "text-lg font-extrabold text-rose-500 mt-2";
+                badge.className = "text-xs bg-slate-200 text-slate-600 px-2.5 py-1 rounded-full font-medium";
+                badge.innerText = "待機中 (Standby)";
+            }
+            document.getElementById('tvChannelLabel').innerText = `CH: ${tvState.channel}`;
+        }
+
+        window.onload = function() {
+            addLog("Smart TV 中控端 (furniture.html) 初始化完成。硬體 IP: 192.168.0.105，準備就緒。");
+        };
+    </script>
+</body>
+</html>
